@@ -56,12 +56,11 @@
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 14px;
-      height: auto;  /* normal height */
-      width: 100%;   /* normal width to fill container */
+      height: auto;
+      width: 100%;
       box-sizing: border-box;
     }
 
-    /* Remove large height on multi-select */
     select[multiple] {
       height: auto;
     }
@@ -100,10 +99,15 @@
       background-color: #27ae60;
     }
 
+    #tableContainer {
+      overflow-x: auto;
+      width: 100%;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      min-width: 600px;
     }
 
     table th, table td {
@@ -201,14 +205,12 @@
   <script>
     let srNo = 1;
 
-    // Load saved data from localStorage on page load
     window.onload = () => {
       const savedData = JSON.parse(localStorage.getItem("visitHistory")) || [];
       savedData.forEach(entry => addRow(entry));
       srNo = savedData.length + 1;
     };
 
-    // Form submit handler
     document.getElementById("entryForm").addEventListener("submit", function (e) {
       e.preventDefault();
 
@@ -223,7 +225,6 @@
         lastVisit: document.getElementById("lastVisit").value.trim()
       };
 
-      // Save entry in localStorage
       const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
       data.push(entry);
       localStorage.setItem("visitHistory", JSON.stringify(data));
@@ -233,7 +234,6 @@
       this.reset();
     });
 
-    // Add a row to the table
     function addRow(entry) {
       const tbody = document.querySelector("#historyTable tbody");
       const row = tbody.insertRow();
@@ -249,14 +249,12 @@
       `;
     }
 
-    // Export table to Excel
     function exportToExcel() {
       const table = document.getElementById("historyTable");
       const workbook = XLSX.utils.table_to_book(table, { sheet: "Visit History" });
       XLSX.writeFile(workbook, "Visit_History.xlsx");
     }
 
-    // Export table to PDF
     async function exportToPDF() {
       const element = document.getElementById("tableContainer");
       const canvas = await html2canvas(element);
@@ -271,7 +269,6 @@
       pdf.save("Visit_History.pdf");
     }
 
-    // Clear localStorage and refresh page
     function clearAndRefresh() {
       if (confirm("Are you sure you want to clear all entries and refresh?")) {
         localStorage.removeItem("visitHistory");
