@@ -140,6 +140,12 @@
       background-color: #e74c3c;
     }
 
+    small {
+      font-size: 12px;
+      color: red;
+      display: none;
+    }
+
     @media (max-width: 600px) {
       form {
         grid-template-columns: 1fr;
@@ -155,40 +161,63 @@
   <div class="container">
     <h1>Doctor Visit Entry</h1>
 
-    <form id="entryForm">
+    <form id="entryForm" novalidate>
       <input type="hidden" id="editIndex" value="" />
       <div class="form-group">
         <label for="clinicName">Clinic Name</label>
-        <input type="text" id="clinicName" required />
+        <input type="text" id="clinicName" required
+          oninvalid="this.setCustomValidity('Please enter Clinic Name')"
+          oninput="setCustomValidity('')"
+        />
+        <small id="clinicError">Please enter Clinic Name</small>
       </div>
 
       <div class="form-group">
         <label for="doctorName">Doctor Name</label>
-        <input type="text" id="doctorName" required />
+        <input type="text" id="doctorName" required
+          oninvalid="this.setCustomValidity('Please enter Doctor Name')"
+          oninput="setCustomValidity('')"
+        />
+        <small id="doctorError">Please enter Doctor Name</small>
       </div>
 
       <div class="form-group">
         <label for="number">Contact Number</label>
-        <input type="text" id="number" required />
+        <input
+          type="tel"
+          id="number"
+          required
+          placeholder="+91 9876543210"
+          maxlength="20"
+          oninvalid="this.setCustomValidity('Please enter a valid Contact Number')"
+          oninput="setCustomValidity('')"
+        />
+        <small id="numberError">Enter a valid phone number (+CountryCode ##########)</small>
       </div>
 
       <div class="form-group">
-        <label for="samples">Samples (Select multiple)</label>
-        <select id="samples" multiple>
+        <label for="samples">Samples (Select one or more)</label>
+        <select id="samples" multiple required>
           <option value="Gel">Gel</option>
           <option value="Rollen">Rollen</option>
           <option value="Spreay">Spreay</option>
         </select>
+        <small id="samplesError">Please select at least one sample</small>
       </div>
 
       <div class="form-group">
         <label for="repeatDate">Repeat Date</label>
-        <input type="date" id="repeatDate" />
+        <input type="date" id="repeatDate" required />
+        <small id="repeatDateError">Please select Repeat Date</small>
       </div>
 
       <div class="form-group">
         <label for="lastVisit">Last Visit (e.g., Sandeep, Nilesh)</label>
-        <input type="text" id="lastVisit" />
+        <input type="text" id="lastVisit" required
+          oninvalid="this.setCustomValidity('Please enter Last Visit')"
+          oninput="setCustomValidity('')"
+        />
+        <small id="lastVisitError">Please enter Last Visit</small>
       </div>
 
       <div class="form-group full-width">
@@ -224,26 +253,68 @@
   </div>
 
   <script>
-    let srNo = 1;
-
     window.onload = () => {
       const savedData = JSON.parse(localStorage.getItem("visitHistory")) || [];
       savedData.forEach((entry, index) => addRow(entry, index));
-      srNo = savedData.length + 1;
     };
 
     document.getElementById("entryForm").addEventListener("submit", function (e) {
       e.preventDefault();
 
+      // Clear previous errors
+      document.querySelectorAll("small").forEach(s => s.style.display = "none");
+
+      // Validate each field manually for custom validation messages & required samples
+      let valid = true;
+
+      const clinicName = document.getElementById("clinicName");
+      if (!clinicName.value.trim()) {
+        valid = false;
+        document.getElementById("clinicError").style.display = "block";
+      }
+
+      const doctorName = document.getElementById("doctorName");
+      if (!doctorName.value.trim()) {
+        valid = false;
+        document.getElementById("doctorError").style.display = "block";
+      }
+
+      const numberField = document.getElementById("number");
+      const numberError = document.getElementById("numberError");
+      const cleaned = numberField.value.trim();
+      const phoneRegex = /^\+?\d{7,15}$/;
+      if (!phoneRegex.test(cleaned)) {
+        valid = false;
+        numberError.style.display = "block";
+      }
+
+      const samplesSelect = document.getElementById("samples");
+      if (samplesSelect.selectedOptions.length === 0) {
+        valid = false;
+        document.getElementById("samplesError").style.display = "block";
+      }
+
+      const repeatDate = document.getElementById("repeatDate");
+      if (!repeatDate.value) {
+        valid = false;
+        document.getElementById("repeatDateError").style.display = "block";
+      }
+
+      const lastVisit = document.getElementById("lastVisit");
+      if (!lastVisit.value.trim()) {
+        valid = false;
+        document.getElementById("lastVisitError").style.display = "block";
+      }
+
+      if (!valid) return;
+
       const entry = {
-        clinic: document.getElementById("clinicName").value.trim(),
-        doctor: document.getElementById("doctorName").value.trim(),
-        number: document.getElementById("number").value.trim(),
-        samples: Array.from(document.getElementById("samples").selectedOptions)
-          .map(opt => opt.value)
-          .join(", "),
-        repeatDate: document.getElementById("repeatDate").value,
-        lastVisit: document.getElementById("lastVisit").value.trim()
+        clinic: clinicName.value.trim(),
+        doctor: doctorName.value.trim(),
+        number: numberField.value.trim(),
+        samples: Array.from(samplesSelect.selectedOptions).map(opt => opt.value).join(", "),
+        repeatDate: repeatDate.value,
+        lastVisit: lastVisit.value.trim()
       };
 
       let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
