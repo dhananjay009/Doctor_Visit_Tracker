@@ -56,13 +56,13 @@
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 14px;
-      height: auto;
       width: 100%;
       box-sizing: border-box;
     }
 
     select[multiple] {
-      height: auto;
+      max-height: 120px;
+      overflow-y: auto;
     }
 
     .full-width {
@@ -107,7 +107,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 600px;
+      min-width: 700px;
     }
 
     table th, table td {
@@ -126,9 +126,27 @@
       background-color: #ecf0f1;
     }
 
+    .action-btn {
+      background-color: #e67e22;
+      border: none;
+      padding: 6px 10px;
+      margin: 0 3px;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .delete-btn {
+      background-color: #e74c3c;
+    }
+
     @media (max-width: 600px) {
       form {
         grid-template-columns: 1fr;
+      }
+
+      select[multiple] {
+        max-height: 100px;
       }
     }
   </style>
@@ -138,6 +156,7 @@
     <h1>Doctor Visit Entry</h1>
 
     <form id="entryForm">
+      <input type="hidden" id="editIndex" value="" />
       <div class="form-group">
         <label for="clinicName">Clinic Name</label>
         <input type="text" id="clinicName" required />
@@ -154,7 +173,7 @@
       </div>
 
       <div class="form-group">
-        <label for="samples">Samples</label>
+        <label for="samples">Samples (Select multiple)</label>
         <select id="samples" multiple>
           <option value="Gel">Gel</option>
           <option value="Rollen">Rollen</option>
@@ -173,13 +192,14 @@
       </div>
 
       <div class="form-group full-width">
-        <button type="submit">➕ Add Entry</button>
+        <button type="submit">💾 Save Entry</button>
       </div>
     </form>
 
     <div class="export-buttons">
       <button onclick="exportToExcel()">⬇️ Export to Excel</button>
       <button onclick="exportToPDF()">⬇️ Export to PDF</button>
+      <button onclick="window.print()">🖨️ Print View</button>
       <button onclick="clearAndRefresh()">♻️ Clear & Refresh</button>
     </div>
 
@@ -195,6 +215,7 @@
             <th>Samples</th>
             <th>Repeat Date</th>
             <th>Last Visit</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -207,7 +228,7 @@
 
     window.onload = () => {
       const savedData = JSON.parse(localStorage.getItem("visitHistory")) || [];
-      savedData.forEach(entry => addRow(entry));
+      savedData.forEach((entry, index) => addRow(entry, index));
       srNo = savedData.length + 1;
     };
 
@@ -225,28 +246,73 @@
         lastVisit: document.getElementById("lastVisit").value.trim()
       };
 
-      const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
-      data.push(entry);
-      localStorage.setItem("visitHistory", JSON.stringify(data));
+      let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+      const editIndex = document.getElementById("editIndex").value;
 
-      addRow(entry);
-
-      this.reset();
+      if (editIndex !== "") {
+        data[editIndex] = entry;
+        localStorage.setItem("visitHistory", JSON.stringify(data));
+        reloadTable();
+        this.reset();
+        document.getElementById("editIndex").value = "";
+      } else {
+        data.push(entry);
+        localStorage.setItem("visitHistory", JSON.stringify(data));
+        addRow(entry, data.length - 1);
+        this.reset();
+      }
     });
 
-    function addRow(entry) {
+    function addRow(entry, index) {
       const tbody = document.querySelector("#historyTable tbody");
       const row = tbody.insertRow();
-
       row.innerHTML = `
-        <td>${srNo++}</td>
+        <td>${index + 1}</td>
         <td>${entry.clinic}</td>
         <td>${entry.doctor}</td>
         <td>${entry.number}</td>
         <td>${entry.samples}</td>
         <td>${entry.repeatDate}</td>
         <td>${entry.lastVisit}</td>
+        <td>
+          <button class="action-btn" onclick="editRow(${index})">✏️ Edit</button>
+          <button class="action-btn delete-btn" onclick="deleteRow(${index})">🗑️ Delete</button>
+        </td>
       `;
+    }
+
+    function reloadTable() {
+      const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+      const tbody = document.querySelector("#historyTable tbody");
+      tbody.innerHTML = "";
+      data.forEach((entry, index) => addRow(entry, index));
+    }
+
+    function deleteRow(index) {
+      if (confirm("Delete this entry?")) {
+        let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+        data.splice(index, 1);
+        localStorage.setItem("visitHistory", JSON.stringify(data));
+        reloadTable();
+      }
+    }
+
+    function editRow(index) {
+      const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+      const entry = data[index];
+
+      document.getElementById("clinicName").value = entry.clinic;
+      document.getElementById("doctorName").value = entry.doctor;
+      document.getElementById("number").value = entry.number;
+      document.getElementById("repeatDate").value = entry.repeatDate;
+      document.getElementById("lastVisit").value = entry.lastVisit;
+
+      const samplesSelect = document.getElementById("samples");
+      Array.from(samplesSelect.options).forEach(opt => {
+        opt.selected = entry.samples.includes(opt.value);
+      });
+
+      document.getElementById("editIndex").value = index;
     }
 
     function exportToExcel() {
