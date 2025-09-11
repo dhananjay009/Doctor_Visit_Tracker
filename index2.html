@@ -1,3 +1,4 @@
+<!-- Filename: doctor_visit_tracker.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,17 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Doctor Visit Tracker</title>
 
-  <!-- SheetJS for Excel Export -->
+  <!-- SheetJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- jsPDF and html2canvas for PDF Export -->
+  <!-- jsPDF and html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    /* Same CSS as before (unchanged) */
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -54,7 +52,6 @@
     label {
       margin-bottom: 6px;
       font-weight: bold;
-      color: #333;
     }
 
     input, select {
@@ -62,17 +59,9 @@
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 14px;
-      width: 100%;
     }
 
-    .qty {
-      width: 60px;
-      margin-left: 10px;
-    }
-
-    .full-width {
-      grid-column: 1 / -1;
-    }
+    .full-width { grid-column: 1 / -1; }
 
     button {
       padding: 12px;
@@ -86,9 +75,7 @@
       transition: background 0.3s ease;
     }
 
-    button:hover {
-      background-color: #2980b9;
-    }
+    button:hover { background-color: #2980b9; }
 
     .export-buttons {
       display: flex;
@@ -103,19 +90,16 @@
       flex: 1 1 140px;
     }
 
-    .export-buttons button:hover {
-      background-color: #27ae60;
-    }
+    .export-buttons button:hover { background-color: #27ae60; }
 
     #tableContainer {
       overflow-x: auto;
-      width: 100%;
+      -webkit-overflow-scrolling: touch;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 1000px;
     }
 
     th, td {
@@ -124,14 +108,9 @@
       text-align: center;
     }
 
-    th {
-      background-color: #34495e;
-      color: white;
-    }
+    th { background-color: #34495e; color: white; }
 
-    tr:nth-child(even) {
-      background-color: #ecf0f1;
-    }
+    tr:nth-child(even) { background-color: #ecf0f1; }
 
     .action-btn {
       background-color: #e67e22;
@@ -153,103 +132,62 @@
       display: none;
     }
 
+    .samples-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sample-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f7f9fc;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .sample-item input.qty {
+      width: 50px;
+      padding: 4px;
+    }
+
     @media (max-width: 768px) {
-      .container {
-        padding: 20px;
-      }
-
-      button, input, select {
-        font-size: 15px;
-      }
-
-      table {
-        font-size: 13px;
-      }
+      form { grid-template-columns: 1fr; }
+      th, td { font-size: 13px; padding: 6px; }
     }
 
     @media (max-width: 480px) {
-      h1, h2 {
-        font-size: 20px;
+      h1, h2 { font-size: 20px; }
+      .export-buttons { flex-direction: column; gap: 8px; }
+      .samples-container { flex-direction: column; }
+      .sample-item { justify-content: space-between; }
+      table thead { display: none; }
+      table, tbody, tr, td { display: block; width: 100%; }
+      tr { margin-bottom: 15px; border: 1px solid #ccc; padding: 10px; }
+      td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
       }
-
-      .export-buttons {
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .export-buttons button {
-        width: 100%;
-      }
-
-      input, select {
-        font-size: 14px;
+      td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        text-align: left;
+        font-weight: bold;
       }
     }
-
-    .samples-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 6px;
-}
-
-.sample-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #f7f9fc;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  user-select: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.sample-item:hover {
-  background-color: #e0efff;
-}
-
-.sample-item input[type="checkbox"] {
-  cursor: pointer;
-  width: 18px;
-  height: 18px;
-}
-
-.sample-item input.qty {
-  width: 48px;
-  padding: 4px 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-  text-align: center;
-  user-select: text;
-  cursor: text;
-}
-
-.sample-item input.qty:disabled {
-  background-color: #eee;
-  cursor: not-allowed;
-}
-
-@media (max-width: 480px) {
-  .samples-container {
-    gap: 10px;
-  }
-  .sample-item {
-    flex: 1 1 100%;
-    justify-content: space-between;
-  }
-}
-
-
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Doctor Visit Tracker</h1>
     <form id="entryForm" novalidate>
-      <input type="hidden" id="editIndex" value="" />
+      <input type="hidden" id="editIndex" />
 
       <div class="form-group">
         <label for="selectDate">Select Date</label>
@@ -274,39 +212,12 @@
         <input type="tel" id="number" placeholder="+91 9876543210" maxlength="20" required />
         <small id="numberError">Enter a valid phone number</small>
       </div>
-
-        <div class="form-group">
-  <label>Samples (check and add quantity):</label>
-  <div class="samples-container">
-    <label class="sample-item">
-      <input type="checkbox" name="sample" value="Gel" onchange="toggleQuantity(this)" />
-      Gel
-      <input type="number" min="1" value="1" class="qty" data-sample="Gel" disabled />
-    </label>
-    <label class="sample-item">
-      <input type="checkbox" name="sample" value="Roll-On" onchange="toggleQuantity(this)" />
-      Roll-On
-      <input type="number" min="1" value="1" class="qty" data-sample="Roll-On" disabled />
-    </label>
-    <label class="sample-item">
-      <input type="checkbox" name="sample" value="Spray" onchange="toggleQuantity(this)" />
-      Spray
-      <input type="number" min="1" value="1" class="qty" data-sample="Spray" disabled />
-    </label>
-    <!-- Add more samples here -->
-  </div>
-  <small id="samplesError">Select at least one sample and specify quantity</small>
-</div>
-
-
-
-      <div class="form-group">
-        <label for="area">Area / Landmark </label>
-        <input type="text" id="area" required autocomplete="off" />
+<div class="form-group">
+        <label for="area">Area / Landmark</label>
+        <input type="text" id="area" required />
         <small id="areaError">Enter area</small>
       </div>
 
-      
       <div class="form-group">
         <label for="repeatDate">Repeat Date</label>
         <input type="date" id="repeatDate" required />
@@ -319,9 +230,29 @@
         <small id="lastVisitError">Enter last visitor</small>
       </div>
 
-      
-    
+      <div class="form-group full-width">
+        <label>Samples (check and add quantity):</label>
+        <div class="samples-container">
+          <label class="sample-item">
+            <input type="checkbox" value="Gel" onchange="toggleQuantity(this)" />
+            Gel
+            <input type="number" min="1" value="1" class="qty" data-sample="Gel" disabled />
+          </label>
+          <label class="sample-item">
+            <input type="checkbox" value="Roll-On" onchange="toggleQuantity(this)" />
+            Roll-On
+            <input type="number" min="1" value="1" class="qty" data-sample="Roll-On" disabled />
+          </label>
+          <label class="sample-item">
+            <input type="checkbox" value="Spray" onchange="toggleQuantity(this)" />
+            Spray
+            <input type="number" min="1" value="1" class="qty" data-sample="Spray" disabled />
+          </label>
+        </div>
+        <small id="samplesError">Select at least one sample and specify quantity</small>
+      </div>
 
+      
       <div class="form-group full-width">
         <label for="feedback">Feedback</label>
         <input type="text" id="feedback" placeholder="Optional feedback..." />
@@ -368,186 +299,170 @@
   </div>
 
   <script>
-    function toggleQuantity(checkbox) {
-      const qtyInput = checkbox.parentElement.querySelector(".qty");
-      qtyInput.disabled = !checkbox.checked;
-    }
+    const $ = id => document.getElementById(id);
 
     window.onload = () => {
-      const savedData = JSON.parse(localStorage.getItem("visitHistory")) || [];
-      savedData.forEach((entry, index) => addRow(entry, index));
-      updateSummary(savedData);
+      const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+      data.forEach((e, i) => addRow(e, i));
+      updateSummary(data);
 
       const today = new Date().toISOString().split("T")[0];
-      document.getElementById("selectDate").value = today;
+      $("selectDate").value = today;
 
       const nextWeek = new Date();
       nextWeek.setDate(nextWeek.getDate() + 7);
-      document.getElementById("repeatDate").value = nextWeek.toISOString().split("T")[0];
+      $("repeatDate").value = nextWeek.toISOString().split("T")[0];
     };
 
-    document.getElementById("entryForm").addEventListener("submit", function (e) {
+    function toggleQuantity(cb) {
+      cb.parentElement.querySelector(".qty").disabled = !cb.checked;
+    }
+
+    $("entryForm").addEventListener("submit", e => {
       e.preventDefault();
-      document.querySelectorAll("small").forEach(el => el.style.display = "none");
+      document.querySelectorAll("small").forEach(s => s.style.display = "none");
 
-      let valid = true;
-      const get = id => document.getElementById(id);
-      const checkedSamples = Array.from(document.querySelectorAll("input[name='sample']:checked"));
-
-      const samples = checkedSamples.map(cb => {
-        const sample = cb.value;
-        const qty = document.querySelector(`input.qty[data-sample="${sample}"]`).value;
-        return `${sample} (${qty})`;
-      }).join(", ");
+      const samples = Array.from(document.querySelectorAll(".sample-item input[type='checkbox']:checked"))
+        .map(cb => {
+          const qtyInput = cb.parentElement.querySelector(".qty");
+          return `${cb.value} (${qtyInput.value})`;
+        });
 
       const entry = {
-        selectDate: get("selectDate").value,
-        clinic: get("clinicName").value.trim(),
-        doctor: get("doctorName").value.trim(),
-        number: get("number").value.trim(),
-        area: get("area").value.trim(),
-        samples: samples,
-        repeatDate: get("repeatDate").value,
-        lastVisit: get("lastVisit").value.trim(),
-        feedback: get("feedback").value.trim()
+        selectDate: $("selectDate").value,
+        clinic: $("clinicName").value.trim(),
+        doctor: $("doctorName").value.trim(),
+        number: $("number").value.trim(),
+        area: $("area").value.trim(),
+        samples: samples.join(", "),
+        repeatDate: $("repeatDate").value,
+        lastVisit: $("lastVisit").value.trim(),
+        feedback: $("feedback").value.trim()
       };
 
-      if (!entry.selectDate) showError("selectDateError");
-      if (!entry.clinic) showError("clinicError");
-      if (!entry.doctor) showError("doctorError");
-      if (!/^\+?\d{7,15}$/.test(entry.number)) showError("numberError");
-      if (!entry.area) showError("areaError");
-      if (!samples) showError("samplesError");
-      if (!entry.repeatDate) showError("repeatDateError");
-      if (!entry.lastVisit) showError("lastVisitError");
+      let valid = true;
+      if (!entry.selectDate) showError("selectDateError"), valid = false;
+      if (!entry.clinic) showError("clinicError"), valid = false;
+      if (!entry.doctor) showError("doctorError"), valid = false;
+      if (!/^\+?\d{7,15}$/.test(entry.number)) showError("numberError"), valid = false;
+      if (!entry.area) showError("areaError"), valid = false;
+      if (!entry.samples) showError("samplesError"), valid = false;
+      if (!entry.repeatDate) showError("repeatDateError"), valid = false;
+      if (!entry.lastVisit) showError("lastVisitError"), valid = false;
 
-      valid = !document.querySelector("small[style*='block']");
       if (!valid) return;
 
       let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
-      const editIndex = get("editIndex").value;
+      const editIndex = $("editIndex").value;
 
       if (editIndex) {
         data[editIndex] = entry;
-        localStorage.setItem("visitHistory", JSON.stringify(data));
-        reloadTable();
+        $("editIndex").value = "";
       } else {
         data.push(entry);
-        localStorage.setItem("visitHistory", JSON.stringify(data));
-        addRow(entry, data.length - 1);
       }
 
+      localStorage.setItem("visitHistory", JSON.stringify(data));
+      reloadTable();
       updateSummary(data);
-      this.reset();
-      get("editIndex").value = "";
+      $("entryForm").reset();
       document.querySelectorAll(".qty").forEach(q => q.disabled = true);
     });
 
     function showError(id) {
-      document.getElementById(id).style.display = "block";
+      $(id).style.display = "block";
     }
 
-    function addRow(entry, i) {
-      const tbody = document.querySelector("#historyTable tbody");
-      const row = tbody.insertRow();
+    function addRow(entry, index) {
+      const row = $("historyTable").tBodies[0].insertRow();
       row.innerHTML = `
-        <td>${i + 1}</td>
-        <td>${entry.selectDate}</td>
-        <td>${entry.clinic}</td>
-        <td>${entry.doctor}</td>
-        <td>${entry.number}</td>
-        <td>${entry.area}</td>
-        <td>${entry.samples}</td>
-        <td>${entry.repeatDate}</td>
-        <td>${entry.lastVisit}</td>
-        <td>${entry.feedback}</td>
-        <td>
-          <button class="action-btn" onclick="editRow(${i})">✏️</button>
-          <button class="action-btn delete-btn" onclick="deleteRow(${i})">🗑️</button>
-        </td>
-      `;
+        <td data-label="#">${index + 1}</td>
+        <td data-label="Date">${entry.selectDate}</td>
+        <td data-label="Clinic">${entry.clinic}</td>
+        <td data-label="Doctor">${entry.doctor}</td>
+        <td data-label="Phone">${entry.number}</td>
+        <td data-label="Area">${entry.area}</td>
+        <td data-label="Samples">${entry.samples}</td>
+        <td data-label="Repeat">${entry.repeatDate}</td>
+        <td data-label="Last Visit">${entry.lastVisit}</td>
+        <td data-label="Feedback">${entry.feedback}</td>
+        <td data-label="Actions">
+          <button class="action-btn" onclick="editRow(${index})">✏️</button>
+          <button class="action-btn delete-btn" onclick="deleteRow(${index})">🗑️</button>
+        </td>`;
     }
 
     function reloadTable() {
       const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
-      const tbody = document.querySelector("#historyTable tbody");
-      tbody.innerHTML = "";
+      $("historyTable").tBodies[0].innerHTML = "";
       data.forEach((entry, i) => addRow(entry, i));
-      updateSummary(data);
-    }
-
-    function updateSummary(data) {
-      document.getElementById("totalEntries").textContent = data.length;
-      let totalQty = 0;
-      data.forEach(entry => {
-        const sampleParts = entry.samples.split(", ");
-        sampleParts.forEach(part => {
-          const match = part.match(/\((\d+)\)/);
-          if (match) totalQty += parseInt(match[1]);
-        });
-      });
-      document.getElementById("totalSamples").textContent = totalQty;
-    }
-
-    function deleteRow(i) {
-      if (confirm("Delete this entry?")) {
-        let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
-        data.splice(i, 1);
-        localStorage.setItem("visitHistory", JSON.stringify(data));
-        reloadTable();
-      }
     }
 
     function editRow(i) {
       const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
       const e = data[i];
-      const get = id => document.getElementById(id);
+      $("clinicName").value = e.clinic;
+      $("doctorName").value = e.doctor;
+      $("number").value = e.number;
+      $("selectDate").value = e.selectDate;
+      $("area").value = e.area;
+      $("repeatDate").value = e.repeatDate;
+      $("lastVisit").value = e.lastVisit;
+      $("feedback").value = e.feedback || "";
+      $("editIndex").value = i;
 
-      get("clinicName").value = e.clinic;
-      get("doctorName").value = e.doctor;
-      get("number").value = e.number;
-      get("selectDate").value = e.selectDate;
-      get("area").value = e.area;
-      get("repeatDate").value = e.repeatDate;
-      get("lastVisit").value = e.lastVisit;
-      get("feedback").value = e.feedback || "";
-      get("editIndex").value = i;
-
-      document.querySelectorAll("input[name='sample']").forEach(cb => {
+      document.querySelectorAll(".sample-item").forEach(label => {
+        const cb = label.querySelector("input[type='checkbox']");
+        const qty = label.querySelector(".qty");
         const match = e.samples.split(", ").find(s => s.startsWith(cb.value));
         if (match) {
           cb.checked = true;
-          const qtyMatch = match.match(/\((\d+)\)/);
-          const qtyInput = cb.parentElement.querySelector(".qty");
-          qtyInput.disabled = false;
-          qtyInput.value = qtyMatch ? qtyMatch[1] : 1;
+          qty.disabled = false;
+          qty.value = match.match(/\((\d+)\)/)?.[1] || 1;
         } else {
           cb.checked = false;
-          const qtyInput = cb.parentElement.querySelector(".qty");
-          qtyInput.disabled = true;
-          qtyInput.value = 1;
+          qty.disabled = true;
+          qty.value = 1;
         }
       });
     }
 
+    function deleteRow(i) {
+      if (confirm("Delete this entry?")) {
+        const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+        data.splice(i, 1);
+        localStorage.setItem("visitHistory", JSON.stringify(data));
+        reloadTable();
+        updateSummary(data);
+      }
+    }
+
+    function updateSummary(data) {
+      $("totalEntries").textContent = data.length;
+      let totalSamples = 0;
+      data.forEach(e => {
+        e.samples.split(", ").forEach(sample => {
+          const qty = sample.match(/\((\d+)\)/);
+          if (qty) totalSamples += parseInt(qty[1]);
+        });
+      });
+      $("totalSamples").textContent = totalSamples;
+    }
+
     function exportToExcel() {
-      const table = document.getElementById("historyTable");
-      const wb = XLSX.utils.table_to_book(table, { sheet: "Visit History" });
-      XLSX.writeFile(wb, "Visit_History.xlsx");
+      const wb = XLSX.utils.table_to_book($("historyTable"), { sheet: "Visits" });
+      XLSX.writeFile(wb, "Doctor_Visit_History.xlsx");
     }
 
     async function exportToPDF() {
-      const el = document.getElementById("tableContainer");
-      const canvas = await html2canvas(el);
-      const img = canvas.toDataURL("image/png");
-
+      const canvas = await html2canvas($("tableContainer"));
+      const imgData = canvas.toDataURL("image/png");
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF("l", "pt", "a4");
       const width = pdf.internal.pageSize.getWidth();
-      const height = (canvas.height * width) / canvas.width;
-
-      pdf.addImage(img, "PNG", 10, 10, width - 20, height);
-      pdf.save("Visit_History.pdf");
+      const height = canvas.height * width / canvas.width;
+      pdf.addImage(imgData, "PNG", 10, 10, width - 20, height);
+      pdf.save("Doctor_Visit_History.pdf");
     }
 
     function clearAndRefresh() {
