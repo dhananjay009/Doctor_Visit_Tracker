@@ -153,6 +153,12 @@
       padding: 4px;
     }
 
+
+     td[data-label="Other Product"] {
+  font-weight: bold;
+  color: #0a0a0a;
+}
+
     @media (max-width: 768px) {
       form { grid-template-columns: 1fr; }
       th, td { font-size: 13px; padding: 6px; }
@@ -251,7 +257,27 @@
         </div>
         <small id="samplesError">Select at least one sample and specify quantity</small>
       </div>
+        
 
+      <div class="form-group">
+  <label for="otherProduct">Doctor Uses Other Product</label>
+  <input type="text" id="otherProduct" placeholder="Enter other product used..." />
+</div>
+
+<div class="form-group">
+  <label for="patientCount">Average Daily Patient Count</label>
+  <select id="patientCount" required>
+    <option value="">-- Select --</option>
+    <option value="Less than 10">Less than 10</option>
+    <option value="10">10</option>
+    <option value="20">20</option>
+    <option value="30">30</option>
+    <option value="40">40</option>
+    <option value="50">50</option>
+    <option value="More than 50">More than 50</option>
+  </select>
+  <small id="patientCountError">Please select an option</small>
+</div>
       
       <div class="form-group full-width">
         <label for="feedback">Feedback</label>
@@ -275,19 +301,21 @@
     <div id="tableContainer">
       <table id="historyTable">
         <thead>
-          <tr>
-            <th>#</th>
-            <th>Date</th>
-            <th>Clinic</th>
-            <th>Doctor</th>
-            <th>Phone</th>
-            <th>Area</th>
-            <th>Samples</th>
-            <th>Repeat</th>
-            <th>Last Visit</th>
-            <th>Feedback</th>
-            <th>Actions</th>
-          </tr>
+        <tr>
+    <th>#</th>
+    <th>Date</th>
+    <th>Clinic</th>
+    <th>Doctor</th>
+    <th>Phone</th>
+    <th>Area</th>
+    <th>Samples</th>
+    <th>Repeat</th>
+    <th>Last Visit</th>
+    <th><strong>Other Product</strong></th>
+    <th>Patient Count</th>
+    <th>Feedback</th>
+    <th>Actions</th>
+  </tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -329,17 +357,21 @@
           return `${cb.value} (${qtyInput.value})`;
         });
 
+  
       const entry = {
-        selectDate: $("selectDate").value,
-        clinic: $("clinicName").value.trim(),
-        doctor: $("doctorName").value.trim(),
-        number: $("number").value.trim(),
-        area: $("area").value.trim(),
-        samples: samples.join(", "),
-        repeatDate: $("repeatDate").value,
-        lastVisit: $("lastVisit").value.trim(),
-        feedback: $("feedback").value.trim()
-      };
+  selectDate: $("selectDate").value,
+  clinic: $("clinicName").value.trim(),
+  doctor: $("doctorName").value.trim(),
+  number: $("number").value.trim(),
+  area: $("area").value.trim(),
+  samples: samples.join(", "),
+  repeatDate: $("repeatDate").value,
+  lastVisit: $("lastVisit").value.trim(),
+  otherProduct: $("otherProduct").value.trim(),
+  patientCount: $("patientCount").value,
+  feedback: $("feedback").value.trim()
+};
+
 
       let valid = true;
       if (!entry.selectDate) showError("selectDateError"), valid = false;
@@ -350,6 +382,7 @@
       if (!entry.samples) showError("samplesError"), valid = false;
       if (!entry.repeatDate) showError("repeatDateError"), valid = false;
       if (!entry.lastVisit) showError("lastVisitError"), valid = false;
+      if (!entry.patientCount) showError("patientCountError"), valid = false;
 
       if (!valid) return;
 
@@ -377,20 +410,23 @@
     function addRow(entry, index) {
       const row = $("historyTable").tBodies[0].insertRow();
       row.innerHTML = `
-        <td data-label="#">${index + 1}</td>
-        <td data-label="Date">${entry.selectDate}</td>
-        <td data-label="Clinic">${entry.clinic}</td>
-        <td data-label="Doctor">${entry.doctor}</td>
-        <td data-label="Phone">${entry.number}</td>
-        <td data-label="Area">${entry.area}</td>
-        <td data-label="Samples">${entry.samples}</td>
-        <td data-label="Repeat">${entry.repeatDate}</td>
-        <td data-label="Last Visit">${entry.lastVisit}</td>
-        <td data-label="Feedback">${entry.feedback}</td>
-        <td data-label="Actions">
-          <button class="action-btn" onclick="editRow(${index})">✏️</button>
-          <button class="action-btn delete-btn" onclick="deleteRow(${index})">🗑️</button>
-        </td>`;
+  <td data-label="#">${index + 1}</td>
+  <td data-label="Date">${entry.selectDate}</td>
+  <td data-label="Clinic">${entry.clinic}</td>
+  <td data-label="Doctor">${entry.doctor}</td>
+  <td data-label="Phone">${entry.number}</td>
+  <td data-label="Area">${entry.area}</td>
+  <td data-label="Samples">${entry.samples}</td>
+  <td data-label="Repeat">${entry.repeatDate}</td>
+  <td data-label="Last Visit">${entry.lastVisit}</td>
+  <td data-label="Other Product"><strong>${entry.otherProduct || "-"}</strong></td>
+  <td data-label="Patient Count">${entry.patientCount}</td>
+  <td data-label="Feedback">${entry.feedback}</td>
+  <td data-label="Actions">
+    <button class="action-btn" onclick="editRow(${index})">✏️</button>
+    <button class="action-btn delete-btn" onclick="deleteRow(${index})">🗑️</button>
+  </td>`;
+
     }
 
     function reloadTable() {
@@ -409,8 +445,12 @@
       $("area").value = e.area;
       $("repeatDate").value = e.repeatDate;
       $("lastVisit").value = e.lastVisit;
+      $("otherProduct").value = e.otherProduct || "";
+      $("patientCount").value = e.patientCount || "";
       $("feedback").value = e.feedback || "";
       $("editIndex").value = i;
+    
+
 
       document.querySelectorAll(".sample-item").forEach(label => {
         const cb = label.querySelector("input[type='checkbox']");
