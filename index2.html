@@ -215,8 +215,8 @@
 
       <div class="form-group">
         <label for="number">Contact Number</label>
-        <input type="tel" id="number" placeholder="+91 9876543210" maxlength="20" required />
-        <small id="numberError">Enter a valid phone number</small>
+       <input type="tel" id="number" placeholder="9876543210" maxlength="10" required pattern="\d{10}" />
+        <small id="numberError">Enter a valid 10-digit phone number</small>
       </div>
 <div class="form-group">
         <label for="area">Area / Landmark</label>
@@ -266,7 +266,8 @@
 
       <div class="form-group">
   <label for="otherProduct">Doctor Uses Other Product</label>
-  <input type="text" id="otherProduct" placeholder="Enter other product used..." />
+  <input type="text" id="otherProduct" placeholder="Enter other product used..." required />
+  <small id="otherProductError">Enter doctor Uses Other Product</small>
 </div>
 
 <div class="form-group">
@@ -382,11 +383,12 @@
       if (!entry.selectDate) showError("selectDateError"), valid = false;
       if (!entry.clinic) showError("clinicError"), valid = false;
       if (!entry.doctor) showError("doctorError"), valid = false;
-      if (!/^\+?\d{7,15}$/.test(entry.number)) showError("numberError"), valid = false;
+      if (!/^\d{10}$/.test(entry.number)) showError("numberError"), valid = false;
       if (!entry.area) showError("areaError"), valid = false;
       if (!entry.samples) showError("samplesError"), valid = false;
       if (!entry.repeatDate) showError("repeatDateError"), valid = false;
       if (!entry.lastVisit) showError("lastVisitError"), valid = false;
+       if (!entry.otherProduct) showError("otherProductError"), valid = false;
       if (!entry.patientCount) showError("patientCountError"), valid = false;
 
       if (!valid) return;
