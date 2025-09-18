@@ -315,12 +315,13 @@
       </div>
     </div>
 
-    <div id="stockSummary" style="font-weight: bold; text-align: center; margin-bottom: 20px;">
+     <div id="stockSummary" style="font-weight: bold; text-align: center; margin-bottom: 20px;">
       Remaining Stock → Gel15g: <span id="remainGel15g">0</span> | 
       Gel50g: <span id="remainGel50g">0</span> | 
       Roll-On: <span id="remainRollOn">0</span> | 
-      Spray: <span id="remainSpray">0</span>
-    </div>
+      Spray: <span id="remainSpray">0</span> 
+       <!-- Total Stock: <span id="totalremainStock">0</span> -->
+    </div> 
 
     <div class="export-buttons">
       <button onclick="exportToExcel()">⬇️ Excel</button>
@@ -355,8 +356,12 @@
 
     <div id="tableSummary" style="margin-top: 20px; font-weight: bold; text-align: center;">
       Total Entries: <span id="totalEntries">0</span> |
-      Total Samples: <span id="totalSamples">0</span>
+      Total distributed Samples: <span id="totalSamples">0</span> |
+      Remaining Stock: <span id="totalremainStock">0</span>
     </div>
+      
+  </div> 
+
   </div>
 
   <script>
@@ -560,6 +565,9 @@
       $("remainGel50g").textContent = stock["Gel50g"] || 0;
       $("remainRollOn").textContent = stock["Roll-On"] || 0;
       $("remainSpray").textContent = stock["Spray"] || 0;
+
+       let total = (stock["Gel15g"] || 0) + (stock["Gel50g"] || 0) + (stock["Roll-On"] || 0) + (stock["Spray"] || 0);
+      $("totalremainStock").textContent = total;
     }
 
     function deductStock(samples) {
