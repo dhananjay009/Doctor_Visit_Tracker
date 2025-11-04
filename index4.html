@@ -370,36 +370,93 @@
   <script>
     const $ = id => document.getElementById(id);
 
+    // window.onload = () => {
+    //   const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+    //   data.forEach((e, i) => addRow(e, i));
+    //   updateSummary(data);
+    //   loadStock();
+
+    //   const clinicDB = JSON.parse(localStorage.getItem("clinicDB")) || {};
+    //   $("clinicList").innerHTML = Object.keys(clinicDB).map(c => `<option value="${c}">`).join("");
+
+    //   const today = new Date().toISOString().split("T")[0];
+    //   $("selectDate").value = today;
+    //   const nextWeek = new Date();
+    //   nextWeek.setDate(nextWeek.getDate() + 7);
+    //   $("repeatDate").value = nextWeek.toISOString().split("T")[0];
+    // };
+
+    // $("clinicName").addEventListener("input", () => {
+    //   const clinicDB = JSON.parse(localStorage.getItem("clinicDB")) || {};
+    //   const name = $("clinicName").value.trim().toLowerCase();
+    //   if (clinicDB[name]) {
+    //     const c = clinicDB[name];
+    //     $("doctorName").value = c.doctor || "";
+    //     $("number").value = c.number || "";
+    //     $("email").value = c.email || "";
+    //     $("area").value = c.area || "";
+    //     $("lastVisit").value = c.lastVisit || "";
+    //     $("otherProduct").value = c.otherProduct || "";
+    //     $("patientCount").value = c.patientCount || "";
+    //   }
+    // });
+
     window.onload = () => {
-      const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
-      data.forEach((e, i) => addRow(e, i));
-      updateSummary(data);
-      loadStock();
+  const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+  data.forEach((e, i) => addRow(e, i));
+  updateSummary(data);
+  loadStock();
 
-      const clinicDB = JSON.parse(localStorage.getItem("clinicDB")) || {};
-      $("clinicList").innerHTML = Object.keys(clinicDB).map(c => `<option value="${c}">`).join("");
+  const clinicDB = JSON.parse(localStorage.getItem("clinicDB")) || {};
+  $("clinicList").innerHTML = Object.keys(clinicDB)
+    .map(c => `<option value="${c}">`)
+    .join("");
 
-      const today = new Date().toISOString().split("T")[0];
-      $("selectDate").value = today;
-      const nextWeek = new Date();
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      $("repeatDate").value = nextWeek.toISOString().split("T")[0];
-    };
+  // Always set today’s date and next week’s date on load
+  setTodayAndRepeatDates();
+};
 
-    $("clinicName").addEventListener("input", () => {
-      const clinicDB = JSON.parse(localStorage.getItem("clinicDB")) || {};
-      const name = $("clinicName").value.trim().toLowerCase();
-      if (clinicDB[name]) {
-        const c = clinicDB[name];
-        $("doctorName").value = c.doctor || "";
-        $("number").value = c.number || "";
-        $("email").value = c.email || "";
-        $("area").value = c.area || "";
-        $("lastVisit").value = c.lastVisit || "";
-        $("otherProduct").value = c.otherProduct || "";
-        $("patientCount").value = c.patientCount || "";
-      }
-    });
+// 🟢 Function to always set today and repeat dates
+function setTodayAndRepeatDates() {
+  const today = new Date();
+  const nextWeek = new Date();
+  nextWeek.setDate(today.getDate() + 7);
+
+  $("selectDate").value = today.toISOString().split("T")[0];
+  $("repeatDate").value = nextWeek.toISOString().split("T")[0];
+}
+
+// 🟢 Fixed clinic autofill — keeps dates intact
+$("clinicName").addEventListener("input", () => {
+  const clinicDB = JSON.parse(localStorage.getItem("clinicDB")) || {};
+  const name = $("clinicName").value.trim().toLowerCase();
+
+  if (clinicDB[name]) {
+    const c = clinicDB[name];
+    $("doctorName").value = c.doctor || "";
+    $("number").value = c.number || "";
+    $("email").value = c.email || "";
+    $("area").value = c.area || "";
+    $("lastVisit").value = c.lastVisit || "";
+    $("otherProduct").value = c.otherProduct || "";
+    $("patientCount").value = c.patientCount || "";
+
+    // 🟢 Ensure date fields are always valid (don’t reset)
+    if (!$("selectDate").value) setTodayAndRepeatDates();
+    if (!$("repeatDate").value) setTodayAndRepeatDates();
+  } else {
+    // If it's a new clinic, reset only details (keep date)
+    $("doctorName").value = "";
+    $("number").value = "";
+    $("email").value = "";
+    $("area").value = "";
+    $("lastVisit").value = "";
+    $("otherProduct").value = "";
+    $("patientCount").value = "";
+    setTodayAndRepeatDates();
+  }
+});
+
 
     function toggleQuantity(cb) {
       cb.parentElement.querySelector(".qty").disabled = !cb.checked;
