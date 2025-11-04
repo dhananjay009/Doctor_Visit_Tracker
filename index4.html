@@ -427,9 +427,17 @@ function setTodayAndRepeatDates() {
 }
 
 // 🟢 Fixed clinic autofill — keeps dates intact
+// 🟢 Auto-fill details when clinic is selected + always set date and repeat date
 $("clinicName").addEventListener("input", () => {
   const clinicDB = JSON.parse(localStorage.getItem("clinicDB")) || {};
   const name = $("clinicName").value.trim().toLowerCase();
+
+  // Set today and repeat date (7 days later)
+  const today = new Date();
+  const nextWeek = new Date();
+  nextWeek.setDate(today.getDate() + 7);
+  $("selectDate").value = today.toISOString().split("T")[0];
+  $("repeatDate").value = nextWeek.toISOString().split("T")[0];
 
   if (clinicDB[name]) {
     const c = clinicDB[name];
@@ -440,12 +448,8 @@ $("clinicName").addEventListener("input", () => {
     $("lastVisit").value = c.lastVisit || "";
     $("otherProduct").value = c.otherProduct || "";
     $("patientCount").value = c.patientCount || "";
-
-    // 🟢 Ensure date fields are always valid (don’t reset)
-    if (!$("selectDate").value) setTodayAndRepeatDates();
-    if (!$("repeatDate").value) setTodayAndRepeatDates();
   } else {
-    // If it's a new clinic, reset only details (keep date)
+    // New clinic — clear fields but keep today's date and next week's repeat date
     $("doctorName").value = "";
     $("number").value = "";
     $("email").value = "";
@@ -453,7 +457,6 @@ $("clinicName").addEventListener("input", () => {
     $("lastVisit").value = "";
     $("otherProduct").value = "";
     $("patientCount").value = "";
-    setTodayAndRepeatDates();
   }
 });
 
