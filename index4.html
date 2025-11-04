@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Doctor Visit Tracker</title>
+
+  <!-- SheetJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- jsPDF and html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f2f5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    input, select, textarea {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    input.stock-error {
+      border: 2px solid red;
+      background-color: #ffe6e6;
+    }
+
+    .full-width { grid-column: 1 / -1; }
+
+    button {
+      padding: 12px;
+      border: none;
+      background-color: #3498db;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background 0.3s ease;
+    }
+
+    button:hover { background-color: #2980b9; }
+
+    .export-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    .export-buttons button {
+      background-color: #2ecc71;
+      flex: 1 1 140px;
+    }
+
+    .export-buttons button:hover { background-color: #27ae60; }
+
+    #tableContainer { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th { background-color: #34495e; color: white; }
+
+    tr:nth-child(even) { background-color: #ecf0f1; }
+
+    .action-btn {
+      background-color: #e67e22;
+      border: none;
+      padding: 6px 10px;
+      margin: 2px;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .delete-btn { background-color: #e74c3c; }
+
+    small {
+      font-size: 12px;
+      color: red;
+      display: none;
+    }
+
+    .samples-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sample-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f7f9fc;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .sample-item input.qty {
+      width: 50px;
+      padding: 4px;
+    }
+
+    td[data-label="Other Product"] {
+      font-weight: bold;
+      color: #0a0a0a;
+    }
+
+    @media (max-width: 768px) {
+      form { grid-template-columns: 1fr; }
+      th, td { font-size: 13px; padding: 6px; }
+    }
+
+    @media (max-width: 480px) {
+      h1, h2 { font-size: 20px; }
+      .export-buttons { flex-direction: column; gap: 8px; }
+      .samples-container { flex-direction: column; }
+      .sample-item { justify-content: space-between; }
+      table thead { display: none; }
+      table, tbody, tr, td { display: block; width: 100%; }
+      tr { margin-bottom: 15px; border: 1px solid #ccc; padding: 10px; }
+      td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+      }
+      td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        text-align: left;
+        font-weight: bold;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Doctor Visit Tracker</h1>
+    <form id="entryForm" novalidate>
+      <input type="hidden" id="editIndex" />
+
+      <div class="form-group">
+        <label for="selectDate">Select Date</label>
+        <input type="date" id="selectDate" required />
+        <small id="selectDateError">Please select a date</small>
+      </div>
+
+      <div class="form-group">
+        <label for="clinicName">Clinic Name</label>
+        <input type="text" id="clinicName" list="clinicList" required />
+        <datalist id="clinicList"></datalist>
+        <small id="clinicError">Enter clinic name</small>
+      </div>
+
+      <div class="form-group">
+        <label for="doctorName">Doctor Name</label>
+        <input type="text" id="doctorName" required />
+        <small id="doctorError">Enter doctor name</small>
+      </div>
+
+      <div class="form-group">
+        <label for="number">Contact Number</label>
+        <input type="tel" id="number" placeholder="9876543210" maxlength="10" required pattern="\d{10}" />
+        <small id="numberError">Enter a valid 10-digit phone number</small>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email ID</label>
+        <input type="email" id="email" placeholder="doctor@example.com" required />
+        <small id="emailError">Enter a valid email ID</small>
+      </div>
+
+      <div class="form-group">
+        <label for="area">Area / Landmark</label>
+        <input type="text" id="area" required />
+        <small id="areaError">Enter area</small>
+      </div>
+
+      <div class="form-group">
+        <label for="repeatDate">Repeat Date</label>
+        <input type="date" id="repeatDate" required />
+        <small id="repeatDateError">Select repeat date</small>
+      </div>
+
+      <div class="form-group">
+        <label for="lastVisit">Last Visit</label>
+        <input type="text" id="lastVisit" required />
+        <small id="lastVisitError">Enter last visitor</small>
+      </div>
+
+      <div class="form-group full-width">
+        <label>Samples (check and add quantity):</label>
+        <div class="samples-container">
+          <label class="sample-item">
+            <input type="checkbox" value="Gel15g" onchange="toggleQuantity(this)" />
+            Gel15g
+            <input type="number" min="1" value="1" class="qty" data-sample="Gel15g" disabled />
+          </label>
+          <label class="sample-item">
+            <input type="checkbox" value="Gel50g" onchange="toggleQuantity(this)" />
+            Gel50g
+            <input type="number" min="1" value="1" class="qty" data-sample="Gel50g" disabled />
+          </label>
+          <label class="sample-item">
+            <input type="checkbox" value="Roll-On" onchange="toggleQuantity(this)" />
+            Roll-On
+            <input type="number" min="1" value="1" class="qty" data-sample="Roll-On" disabled />
+          </label>
+          <label class="sample-item">
+            <input type="checkbox" value="Spray" onchange="toggleQuantity(this)" />
+            Spray
+            <input type="number" min="1" value="1" class="qty" data-sample="Spray" disabled />
+          </label>
+        </div>
+        <small id="samplesError">Select at least one sample and specify quantity</small>
+      </div>
+
+      <div class="form-group">
+        <label for="otherProduct">Doctor Uses Other Product</label>
+        <input type="text" id="otherProduct" placeholder="Enter other product used..." required />
+        <small id="otherProductError">Enter doctor Uses Other Product</small>
+      </div>
+
+      <div class="form-group">
+        <label for="patientCount">Average Daily Patient Count</label>
+        <select id="patientCount" required>
+          <option value="">-- Select --</option>
+          <option value="Less than 10">Less than 10</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="40">40</option>
+          <option value="50">50</option>
+          <option value="More than 50">More than 50</option>
+        </select>
+        <small id="patientCountError">Please select an option</small>
+      </div>
+      
+      <div class="form-group full-width">
+        <label for="feedback">Feedback</label>
+        <textarea rows="5" cols="5" id="feedback" placeholder="Optional feedback..."></textarea>
+      </div>
+
+      <div class="form-group full-width">
+        <button type="submit">💾 Save Entry</button>
+      </div>
+    </form>
+
+    <!-- 🔹 Stock Management Section -->
+    <h2>Stock Management</h2>
+    <div id="stockContainer" style="margin-bottom: 20px;">
+      <div class="form-group">
+        <label for="stockGel15g">Gel15g Stock</label>
+        <input type="number" id="stockGel15g" value="0" min="0" onchange="updateStock('Gel15g', this.value)" />
+      </div>
+      <div class="form-group">
+        <label for="stockGel50g">Gel50g Stock</label>
+        <input type="number" id="stockGel50g" value="0" min="0" onchange="updateStock('Gel50g', this.value)" />
+      </div>
+      <div class="form-group">
+        <label for="stockRollOn">Roll-On Stock</label>
+        <input type="number" id="stockRollOn" value="0" min="0" onchange="updateStock('Roll-On', this.value)" />
+      </div>
+      <div class="form-group">
+        <label for="stockSpray">Spray Stock</label>
+        <input type="number" id="stockSpray" value="0" min="0" onchange="updateStock('Spray', this.value)" />
+      </div>
+    </div>
+
+    <div id="stockSummary" style="font-weight: bold; text-align: center; margin-bottom: 20px;">
+      Remaining Stock → Gel15g: <span id="remainGel15g">0</span> | 
+      Gel50g: <span id="remainGel50g">0</span> | 
+      Roll-On: <span id="remainRollOn">0</span> | 
+      Spray: <span id="remainSpray">0</span>
+    </div>
+
+    <div class="export-buttons">
+      <button onclick="exportToExcel()">⬇️ Excel</button>
+      <button onclick="exportToPDF()">⬇️ PDF</button>
+      <button onclick="window.print()">🖨️ Print</button>
+      <button onclick="clearAndRefresh()">♻️ Clear All</button>
+    </div>
+
+    <h2>Visit History</h2>
+    <div id="tableContainer">
+      <table id="historyTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Clinic</th>
+            <th>Doctor</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Area</th>
+            <th>Samples</th>
+            <th>Repeat</th>
+            <th>Last Visit</th>
+            <th><strong>Other Product</strong></th>
+            <th>Patient Count</th>
+            <th>Feedback</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div id="tableSummary" style="margin-top: 20px; font-weight: bold; text-align: center;">
+      Entries: <span id="totalEntries">0</span> |
+      Samples: <span id="totalSamples">0</span> |
+      Stock: <span id="totalremainStock">0</span>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    window.onload = () => {
+      const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+      data.forEach((e, i) => addRow(e, i));
+      updateSummary(data);
+      loadStock();
+
+      const clinicDB = JSON.parse(localStorage.getItem("clinicDB")) || {};
+      $("clinicList").innerHTML = Object.keys(clinicDB).map(c => `<option value="${c}">`).join("");
+
+      const today = new Date().toISOString().split("T")[0];
+      $("selectDate").value = today;
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      $("repeatDate").value = nextWeek.toISOString().split("T")[0];
+    };
+
+    $("clinicName").addEventListener("input", () => {
+      const clinicDB = JSON.parse(localStorage.getItem("clinicDB")) || {};
+      const name = $("clinicName").value.trim().toLowerCase();
+      if (clinicDB[name]) {
+        const c = clinicDB[name];
+        $("doctorName").value = c.doctor || "";
+        $("number").value = c.number || "";
+        $("email").value = c.email || "";
+        $("area").value = c.area || "";
+        $("lastVisit").value = c.lastVisit || "";
+        $("otherProduct").value = c.otherProduct || "";
+        $("patientCount").value = c.patientCount || "";
+      }
+    });
+
+    function toggleQuantity(cb) {
+      cb.parentElement.querySelector(".qty").disabled = !cb.checked;
+    }
+
+    $("entryForm").addEventListener("submit", e => {
+      e.preventDefault();
+      document.querySelectorAll("small").forEach(s => s.style.display = "none");
+
+      const samples = Array.from(document.querySelectorAll(".sample-item input[type='checkbox']:checked"))
+        .map(cb => {
+          const qtyInput = cb.parentElement.querySelector(".qty");
+          return `${cb.value} (${qtyInput.value})`;
+        });
+
+      const entry = {
+        selectDate: $("selectDate").value,
+        clinic: $("clinicName").value.trim(),
+        doctor: $("doctorName").value.trim(),
+        number: $("number").value.trim(),
+        email: $("email").value.trim(),
+        area: $("area").value.trim(),
+        samples: samples.join(", "),
+        repeatDate: $("repeatDate").value,
+        lastVisit: $("lastVisit").value.trim(),
+        otherProduct: $("otherProduct").value.trim(),
+        patientCount: $("patientCount").value,
+        feedback: $("feedback").value.trim()
+      };
+
+      let valid = true;
+      if (!entry.selectDate) showError("selectDateError"), valid = false;
+      if (!entry.clinic) showError("clinicError"), valid = false;
+      if (!entry.doctor) showError("doctorError"), valid = false;
+      if (!/^\d{10}$/.test(entry.number)) showError("numberError"), valid = false;
+      if (!entry.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entry.email)) {
+  showError("emailError");
+  valid = false;
+}
+      if (!entry.area) showError("areaError"), valid = false;
+      if (!entry.samples) showError("samplesError"), valid = false;
+      if (!entry.repeatDate) showError("repeatDateError"), valid = false;
+      if (!entry.lastVisit) showError("lastVisitError"), valid = false;
+      if (!entry.otherProduct) showError("otherProductError"), valid = false;
+      if (!entry.patientCount) showError("patientCountError"), valid = false;
+      if (!valid) return;
+
+      let stock = JSON.parse(localStorage.getItem("stockData")) || {};
+      let insufficient = [];
+      document.querySelectorAll("#stockContainer input").forEach(i => i.classList.remove("stock-error"));
+
+      samples.forEach(sample => {
+        const match = sample.match(/(.+?) \\((\\d+)\\)/);
+        if (match) {
+          const product = match[1];
+          const qty = parseInt(match[2]);
+          if (!stock[product] || stock[product] < qty) {
+            insufficient.push(`${product} (Need: ${qty}, Available: ${stock[product] || 0})`);
+            if (product === "Gel15g") $("stockGel15g").classList.add("stock-error");
+            if (product === "Gel50g") $("stockGel50g").classList.add("stock-error");
+            if (product === "Roll-On") $("stockRollOn").classList.add("stock-error");
+            if (product === "Spray") $("stockSpray").classList.add("stock-error");
+          }
+        }
+      });
+
+      if (insufficient.length > 0) {
+        alert("⚠️ Please feed stock!\\nInsufficient for: \\n" + insufficient.join("\\n"));
+        return;
+      }
+
+      deductStock(samples);
+
+      let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+      const editIndex = $("editIndex").value;
+
+      if (editIndex) {
+        data[editIndex] = entry;
+        $("editIndex").value = "";
+      } else {
+        data.push(entry);
+      }
+
+      localStorage.setItem("visitHistory", JSON.stringify(data));
+
+      // Save clinic details for auto-fill
+      let clinicDB = JSON.parse(localStorage.getItem("clinicDB")) || {};
+      clinicDB[entry.clinic.toLowerCase()] = {
+        doctor: entry.doctor,
+        number: entry.number,
+        email: entry.email,
+        area: entry.area,
+        lastVisit: entry.lastVisit,
+        otherProduct: entry.otherProduct,
+        patientCount: entry.patientCount
+      };
+      localStorage.setItem("clinicDB", JSON.stringify(clinicDB));
+
+      reloadTable();
+      updateSummary(data);
+      $("entryForm").reset();
+      document.querySelectorAll(".qty").forEach(q => q.disabled = true);
+    });
+
+    function showError(id) { $(id).style.display = "block"; }
+
+    function addRow(entry, index) {
+      const row = $("historyTable").tBodies[0].insertRow();
+      row.innerHTML = `
+        <td data-label="#">${index + 1}</td>
+        <td data-label="Date">${entry.selectDate}</td>
+        <td data-label="Clinic">${entry.clinic}</td>
+        <td data-label="Doctor">${entry.doctor}</td>
+        <td data-label="Phone">${entry.number}</td>
+        <td data-label="Email">${entry.email}</td>
+        <td data-label="Area">${entry.area}</td>
+        <td data-label="Samples">${entry.samples}</td>
+        <td data-label="Repeat">${entry.repeatDate}</td>
+        <td data-label="Last Visit">${entry.lastVisit}</td>
+        <td data-label="Other Product"><strong>${entry.otherProduct || "-"}</strong></td>
+        <td data-label="Patient Count">${entry.patientCount}</td>
+        <td data-label="Feedback">${entry.feedback}</td>
+        <td data-label="Actions">
+          <button class="action-btn" onclick="editRow(${index})">✏️</button>
+          <button class="action-btn delete-btn" onclick="deleteRow(${index})">🗑️</button>
+        </td>`;
+    }
+
+    function reloadTable() {
+      const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+      $("historyTable").tBodies[0].innerHTML = "";
+      data.forEach((e, i) => addRow(e, i));
+    }
+
+    function editRow(index) {
+      const data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+      const e = data[index];
+      $("editIndex").value = index;
+      $("selectDate").value = e.selectDate;
+      $("clinicName").value = e.clinic;
+      $("doctorName").value = e.doctor;
+      $("number").value = e.number;
+      $("email").value = e.email;
+      $("area").value = e.area;
+      $("repeatDate").value = e.repeatDate;
+      $("lastVisit").value = e.lastVisit;
+      $("otherProduct").value = e.otherProduct;
+      $("patientCount").value = e.patientCount;
+      $("feedback").value = e.feedback;
+      document.querySelectorAll(".sample-item input[type='checkbox']").forEach(cb => {
+        const qtyInput = cb.parentElement.querySelector(".qty");
+        if (e.samples.includes(cb.value)) {
+          cb.checked = true;
+          qtyInput.disabled = false;
+          const match = e.samples.match(new RegExp(`${cb.value} \\((\\d+)\\)`));
+          if (match) qtyInput.value = match[1];
+        } else {
+          cb.checked = false;
+          qtyInput.disabled = true;
+        }
+      });
+    }
+
+    function deleteRow(index) {
+      if (!confirm("Delete this entry?")) return;
+      let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+      data.splice(index, 1);
+      localStorage.setItem("visitHistory", JSON.stringify(data));
+      reloadTable();
+      updateSummary(data);
+    }
+
+    function updateSummary(data) {
+      $("totalEntries").textContent = data.length;
+      let totalSamples = 0;
+      data.forEach(e => {
+        const matches = e.samples.match(/\\((\\d+)\\)/g);
+        if (matches) matches.forEach(m => totalSamples += parseInt(m.replace(/\\D/g, "")));
+      });
+      $("totalSamples").textContent = totalSamples;
+    }
+
+    function updateStock(product, value) {
+      let stock = JSON.parse(localStorage.getItem("stockData")) || {};
+      stock[product] = parseInt(value);
+      localStorage.setItem("stockData", JSON.stringify(stock));
+      loadStock();
+    }
+
+    function loadStock() {
+      let stock = JSON.parse(localStorage.getItem("stockData")) || {};
+      $("stockGel15g").value = stock["Gel15g"] || 0;
+      $("stockGel50g").value = stock["Gel50g"] || 0;
+      $("stockRollOn").value = stock["Roll-On"] || 0;
+      $("stockSpray").value = stock["Spray"] || 0;
+
+      $("remainGel15g").textContent = stock["Gel15g"] || 0;
+      $("remainGel50g").textContent = stock["Gel50g"] || 0;
+      $("remainRollOn").textContent = stock["Roll-On"] || 0;
+      $("remainSpray").textContent = stock["Spray"] || 0;
+
+      let total = (stock["Gel15g"] || 0) + (stock["Gel50g"] || 0) + (stock["Roll-On"] || 0) + (stock["Spray"] || 0);
+      $("totalremainStock").textContent = total;
+    }
+
+    function deductStock(samples) {
+      let stock = JSON.parse(localStorage.getItem("stockData")) || {};
+      samples.forEach(sample => {
+        const match = sample.match(/(.+?) \\((\\d+)\\)/);
+        if (match) {
+          const product = match[1];
+          const qty = parseInt(match[2]);
+          stock[product] = (stock[product] || 0) - qty;
+        }
+      });
+      localStorage.setItem("stockData", JSON.stringify(stock));
+      loadStock();
+    }
+
+    function exportToExcel() {
+      let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+      if (!data.length) return alert("No data to export");
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "VisitHistory");
+      XLSX.writeFile(wb, "VisitHistory.xlsx");
+    }
+
+    async function exportToPDF() {
+      let element = document.querySelector("#tableContainer");
+      const canvas = await html2canvas(element, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jspdf.jsPDF("p", "mm", "a4");
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("VisitHistory.pdf");
+    }
+
+    function clearAndRefresh() {
+      if (confirm("Clear all data?")) {
+        localStorage.removeItem("visitHistory");
+        localStorage.removeItem("stockData");
+        localStorage.removeItem("clinicDB");
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>
