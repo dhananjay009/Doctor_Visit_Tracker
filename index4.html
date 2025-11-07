@@ -495,10 +495,10 @@ $("clinicName").addEventListener("input", () => {
       if (!entry.clinic) showError("clinicError"), valid = false;
       if (!entry.doctor) showError("doctorError"), valid = false;
       if (!/^\d{10}$/.test(entry.number)) showError("numberError"), valid = false;
-      if (!entry.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entry.email)) {
-  showError("emailError");
-  valid = false;
-}
+      //if (!entry.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entry.email)) {
+  //showError("emailError");
+  //valid = false;
+//}
       if (!entry.area) showError("areaError"), valid = false;
       if (!entry.samples) showError("samplesError"), valid = false;
       if (!entry.repeatDate) showError("repeatDateError"), valid = false;
@@ -711,3 +711,4 @@ $("clinicName").addEventListener("input", () => {
   </script>
 </body>
 </html>
+
