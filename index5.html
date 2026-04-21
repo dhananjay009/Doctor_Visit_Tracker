@@ -196,44 +196,11 @@
 
     <div class="form-group full-width" style="display:flex; gap:12px;">
       <button type="submit" style="flex:3;">💾 Save Entry</button>
-      <button type="button" class="btn-secondary" onclick="clearForm()" style="flex:1;">✖ Clear Form</button>
+      <!-- <button type="button" class="btn-secondary" onclick="clearForm()" style="flex:1;">✖ Clear Form</button> -->
     </div>
   </form>
 
-  <h2>Stock Management</h2>
-  <div id="stockContainer">
-    <div class="stock-card" id="card-Gel15g">
-      <label for="stockGel15g">Gel15g Stock <span class="low-badge" id="badge-Gel15g"></span></label>
-      <input type="number" id="stockGel15g" value="0" min="0" onchange="updateStock('Gel15g', this.value)" />
-    </div>
-    <div class="stock-card" id="card-Gel50g">
-      <label for="stockGel50g">Gel50g Stock <span class="low-badge" id="badge-Gel50g"></span></label>
-      <input type="number" id="stockGel50g" value="0" min="0" onchange="updateStock('Gel50g', this.value)" />
-    </div>
-    <div class="stock-card" id="card-RollOn">
-      <label for="stockRollOn">Roll-On Stock <span class="low-badge" id="badge-Roll-On"></span></label>
-      <input type="number" id="stockRollOn" value="0" min="0" onchange="updateStock('Roll-On', this.value)" />
-    </div>
-    <div class="stock-card" id="card-Spray">
-      <label for="stockSpray">Spray Stock <span class="low-badge" id="badge-Spray"></span></label>
-      <input type="number" id="stockSpray" value="0" min="0" onchange="updateStock('Spray', this.value)" />
-    </div>
-  </div>
-
-  <div id="stockSummary">
-    Remaining Stock → Gel15g: <span id="remainGel15g">0</span> |
-    Gel50g: <span id="remainGel50g">0</span> |
-    Roll-On: <span id="remainRollOn">0</span> |
-    Spray: <span id="remainSpray">0</span>
-  </div>
-
-  <div class="export-buttons">
-    <button onclick="exportToExcel()">⬇️ Excel</button>
-    <button onclick="exportToPDF()">⬇️ PDF</button>
-    <button onclick="window.print()">🖨️ Print</button>
-    <button onclick="clearAndRefresh()" style="background:#e74c3c;">♻️ Clear All Data</button>
-  </div>
-
+  
   <h2>Visit History</h2>
   <div class="search-bar">
     <input type="text" id="searchInput" placeholder="Search by clinic, doctor, area..." oninput="filterTable()" />
@@ -268,9 +235,46 @@
   <div id="tableSummary">
     Entries: <span id="totalEntries">0</span> |
     Total Samples Given: <span id="totalSamples">0</span> |
-    Total Remaining Stock: <span id="totalremainStock">0</span>
+    <!-- Total Remaining Stock: <span id="totalremainStock">0</span> -->
   </div>
 </div>
+
+  
+  <h2>Stock Management</h2>
+  <div id="stockContainer">
+    <div class="stock-card" id="card-Gel15g">
+      <label for="stockGel15g">Gel15g Stock <span class="low-badge" id="badge-Gel15g"></span></label>
+      <input type="number" id="stockGel15g" value="0" min="0" onchange="updateStock('Gel15g', this.value)" />
+    </div>
+    <div class="stock-card" id="card-Gel50g">
+      <label for="stockGel50g">Gel50g Stock <span class="low-badge" id="badge-Gel50g"></span></label>
+      <input type="number" id="stockGel50g" value="0" min="0" onchange="updateStock('Gel50g', this.value)" />
+    </div>
+    <div class="stock-card" id="card-RollOn">
+      <label for="stockRollOn">Roll-On Stock <span class="low-badge" id="badge-Roll-On"></span></label>
+      <input type="number" id="stockRollOn" value="0" min="0" onchange="updateStock('Roll-On', this.value)" />
+    </div>
+    <div class="stock-card" id="card-Spray">
+      <label for="stockSpray">Spray Stock <span class="low-badge" id="badge-Spray"></span></label>
+      <input type="number" id="stockSpray" value="0" min="0" onchange="updateStock('Spray', this.value)" />
+    </div>
+  </div>
+
+  <div id="stockSummary">
+    Remaining Stock → Gel15g: <span id="remainGel15g">0</span> |
+    Gel50g: <span id="remainGel50g">0</span> |
+    Roll-On: <span id="remainRollOn">0</span> |
+    Spray: <span id="remainSpray">0</span> |
+    Total Remaining Stock: <span id="totalremainStock">0</span>
+  </div>
+
+  <div class="export-buttons">
+    <button onclick="exportToExcel()">⬇️ Excel</button>
+    <button onclick="exportToPDF()">⬇️ PDF</button>
+    <button onclick="window.print()">🖨️ Print</button>
+    <button onclick="clearAndRefresh()" style="background:#e74c3c;">♻️ Clear All Data</button>
+  </div>
+
 
 <div id="toast"></div>
 
