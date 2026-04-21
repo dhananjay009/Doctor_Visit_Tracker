@@ -200,7 +200,13 @@
     </div>
   </form>
 
-  
+  <div class="export-buttons">
+    <button onclick="exportToExcel()">⬇️ Excel</button>
+    <button onclick="exportToPDF()">⬇️ PDF</button>
+    <button onclick="window.print()">🖨️ Print</button>
+    <button onclick="clearAndRefresh()" style="background:#e74c3c;">♻️ Clear All Data</button>
+  </div>
+
   <h2>Visit History</h2>
   <div class="search-bar">
     <input type="text" id="searchInput" placeholder="Search by clinic, doctor, area..." oninput="filterTable()" />
@@ -235,11 +241,9 @@
   <div id="tableSummary">
     Entries: <span id="totalEntries">0</span> |
     Total Samples Given: <span id="totalSamples">0</span> |
-    <!-- Total Remaining Stock: <span id="totalremainStock">0</span> -->
+    Total Remaining Stock: <span id="totalremainStock">0</span>
   </div>
-</div>
 
-  
   <h2>Stock Management</h2>
   <div id="stockContainer">
     <div class="stock-card" id="card-Gel15g">
@@ -264,17 +268,9 @@
     Remaining Stock → Gel15g: <span id="remainGel15g">0</span> |
     Gel50g: <span id="remainGel50g">0</span> |
     Roll-On: <span id="remainRollOn">0</span> |
-    Spray: <span id="remainSpray">0</span> |
-    Total Remaining Stock: <span id="totalremainStock">0</span>
+    Spray: <span id="remainSpray">0</span>
   </div>
-
-  <div class="export-buttons">
-    <button onclick="exportToExcel()">⬇️ Excel</button>
-    <button onclick="exportToPDF()">⬇️ PDF</button>
-    <button onclick="window.print()">🖨️ Print</button>
-    <button onclick="clearAndRefresh()" style="background:#e74c3c;">♻️ Clear All Data</button>
-  </div>
-
+</div>
 
 <div id="toast"></div>
 
