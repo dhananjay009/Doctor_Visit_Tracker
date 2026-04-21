@@ -39,7 +39,6 @@
     .sample-item { display: flex; align-items: center; gap: 8px; background: #f7f9fc; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; }
     .sample-item input.qty { width: 50px; padding: 4px; }
 
-    /* Stock section */
     #stockContainer { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
     .stock-card { background: #f7f9fc; border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
     .stock-card label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 13px; }
@@ -51,7 +50,6 @@
     #stockSummary { font-weight: bold; text-align: center; margin-bottom: 20px; padding: 12px; background: #eaf7ef; border-radius: 8px; color: #2c3e50; }
     #tableSummary { margin-top: 20px; font-weight: bold; text-align: center; padding: 10px; background: #f0f2f5; border-radius: 6px; }
 
-    /* Toast */
     #toast { position: fixed; bottom: 30px; right: 30px; background: #2ecc71; color: white; padding: 14px 22px; border-radius: 8px; font-weight: 600; font-size: 15px; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 9999; }
     #toast.show { opacity: 1; }
     #toast.error { background: #e74c3c; }
@@ -175,6 +173,22 @@
       <small id="patientCountError">Please select an option</small>
     </div>
 
+    <div class="form-group">
+      <label for="paymentMode">Payment Mode</label>
+      <select id="paymentMode" required>
+        <option value="">-- Select --</option>
+        <option value="Cash">Cash</option>
+        <option value="Online">Online</option>
+      </select>
+      <small id="paymentModeError">Please select payment mode</small>
+    </div>
+
+    <div class="form-group">
+      <label for="pendingBalance">Pending Balance</label>
+      <input type="number" id="pendingBalance" min="0" step="0.01" value="0" placeholder="Enter pending balance" />
+      <small id="pendingBalanceError">Enter a valid pending balance</small>
+    </div>
+
     <div class="form-group full-width">
       <label for="feedback">Feedback</label>
       <textarea rows="4" id="feedback" placeholder="Optional feedback..."></textarea>
@@ -182,11 +196,43 @@
 
     <div class="form-group full-width" style="display:flex; gap:12px;">
       <button type="submit" style="flex:3;">💾 Save Entry</button>
-      <!-- <button type="button" class="btn-secondary" onclick="clearForm()" style="flex:1;">✖ Clear Form</button> -->
+      <button type="button" class="btn-secondary" onclick="clearForm()" style="flex:1;">✖ Clear Form</button>
     </div>
   </form>
 
-  
+  <h2>Stock Management</h2>
+  <div id="stockContainer">
+    <div class="stock-card" id="card-Gel15g">
+      <label for="stockGel15g">Gel15g Stock <span class="low-badge" id="badge-Gel15g"></span></label>
+      <input type="number" id="stockGel15g" value="0" min="0" onchange="updateStock('Gel15g', this.value)" />
+    </div>
+    <div class="stock-card" id="card-Gel50g">
+      <label for="stockGel50g">Gel50g Stock <span class="low-badge" id="badge-Gel50g"></span></label>
+      <input type="number" id="stockGel50g" value="0" min="0" onchange="updateStock('Gel50g', this.value)" />
+    </div>
+    <div class="stock-card" id="card-RollOn">
+      <label for="stockRollOn">Roll-On Stock <span class="low-badge" id="badge-Roll-On"></span></label>
+      <input type="number" id="stockRollOn" value="0" min="0" onchange="updateStock('Roll-On', this.value)" />
+    </div>
+    <div class="stock-card" id="card-Spray">
+      <label for="stockSpray">Spray Stock <span class="low-badge" id="badge-Spray"></span></label>
+      <input type="number" id="stockSpray" value="0" min="0" onchange="updateStock('Spray', this.value)" />
+    </div>
+  </div>
+
+  <div id="stockSummary">
+    Remaining Stock → Gel15g: <span id="remainGel15g">0</span> |
+    Gel50g: <span id="remainGel50g">0</span> |
+    Roll-On: <span id="remainRollOn">0</span> |
+    Spray: <span id="remainSpray">0</span>
+  </div>
+
+  <div class="export-buttons">
+    <button onclick="exportToExcel()">⬇️ Excel</button>
+    <button onclick="exportToPDF()">⬇️ PDF</button>
+    <button onclick="window.print()">🖨️ Print</button>
+    <button onclick="clearAndRefresh()" style="background:#e74c3c;">♻️ Clear All Data</button>
+  </div>
 
   <h2>Visit History</h2>
   <div class="search-bar">
@@ -209,6 +255,8 @@
           <th>Last Visit</th>
           <th>Other Product</th>
           <th>Patient Count</th>
+          <th>Payment Mode</th>
+          <th>Pending Balance</th>
           <th>Feedback</th>
           <th>Actions</th>
         </tr>
@@ -224,21 +272,39 @@
   </div>
 </div>
 
-
-
 <div id="toast"></div>
 
 <script>
   const $ = id => document.getElementById(id);
 
-  // ── Regex to parse sample strings like "Gel15g (3)" ──
-  const SAMPLE_RE = /(.+?) \((\d+)\)/g;
   function parseSamples(str) {
     const results = [];
     let m;
     const re = /(.+?) \((\d+)\)/g;
-    while ((m = re.exec(str)) !== null) results.push({ product: m[1], qty: parseInt(m[2]) });
+    while ((m = re.exec(str)) !== null) results.push({ product: m[1], qty: parseInt(m[2], 10) });
     return results;
+  }
+
+  function samplesToMap(samplesStr) {
+    return parseSamples(samplesStr).reduce((acc, { product, qty }) => {
+      acc[product] = (acc[product] || 0) + qty;
+      return acc;
+    }, {});
+  }
+
+  function getAdjustedStock(baseStock, previousSamples = "", newSamples = "") {
+    const updatedStock = { ...baseStock };
+    const previousMap = samplesToMap(previousSamples);
+    const newMap = samplesToMap(newSamples);
+    const allProducts = new Set([...Object.keys(previousMap), ...Object.keys(newMap)]);
+
+    allProducts.forEach(product => {
+      const previousQty = previousMap[product] || 0;
+      const newQty = newMap[product] || 0;
+      updatedStock[product] = (updatedStock[product] || 0) + previousQty - newQty;
+    });
+
+    return updatedStock;
   }
 
   function showToast(msg, isError = false) {
@@ -279,9 +345,13 @@
       $("lastVisit").value = c.lastVisit || "";
       $("otherProduct").value = c.otherProduct || "";
       $("patientCount").value = c.patientCount || "";
+      $("paymentMode").value = c.paymentMode || "";
+      $("pendingBalance").value = c.pendingBalance ?? 0;
     } else {
-      ["doctorName","number","email","area","lastVisit","otherProduct"].forEach(id => $(id).value = "");
+      ["doctorName", "number", "email", "area", "lastVisit", "otherProduct"].forEach(id => $(id).value = "");
       $("patientCount").value = "";
+      $("paymentMode").value = "";
+      $("pendingBalance").value = 0;
     }
   });
 
@@ -301,6 +371,9 @@
         return `${cb.value} (${qty})`;
       });
 
+    const pendingBalanceValue = $("pendingBalance").value.trim();
+    const parsedPendingBalance = pendingBalanceValue === "" ? 0 : Number(pendingBalanceValue);
+
     const entry = {
       selectDate: $("selectDate").value,
       clinic: $("clinicName").value.trim(),
@@ -313,6 +386,8 @@
       lastVisit: $("lastVisit").value.trim(),
       otherProduct: $("otherProduct").value.trim(),
       patientCount: $("patientCount").value,
+      paymentMode: $("paymentMode").value,
+      pendingBalance: parsedPendingBalance,
       feedback: $("feedback").value.trim()
     };
 
@@ -327,17 +402,23 @@
     if (!entry.lastVisit) { showError("lastVisitError"); valid = false; }
     if (!entry.otherProduct) { showError("otherProductError"); valid = false; }
     if (!entry.patientCount) { showError("patientCountError"); valid = false; }
+    if (!entry.paymentMode) { showError("paymentModeError"); valid = false; }
+    if (Number.isNaN(entry.pendingBalance) || entry.pendingBalance < 0) { showError("pendingBalanceError"); valid = false; }
     if (!valid) return;
 
-    // Stock check — FIX: use correct regex (not escaped)
     let stock = JSON.parse(localStorage.getItem("stockData")) || {};
+    let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+    const editIdx = $("editIndex").value;
+    const previousEntry = editIdx !== "" ? data[parseInt(editIdx, 10)] : null;
+    const adjustedStock = getAdjustedStock(stock, previousEntry?.samples, entry.samples);
     let insufficient = [];
     document.querySelectorAll("#stockContainer input[type='number']").forEach(i => i.classList.remove("stock-error"));
 
-    parseSamples(entry.samples).forEach(({ product, qty }) => {
-      const available = stock[product] || 0;
-      if (available < qty) {
-        insufficient.push(`${product} (Need: ${qty}, Available: ${available})`);
+    parseSamples(entry.samples).forEach(({ product }) => {
+      const available = adjustedStock[product] || 0;
+      if (available < 0) {
+        const required = samplesToMap(entry.samples)[product] || 0;
+        insufficient.push(`${product} (Need: ${required}, Available: ${(stock[product] || 0) + ((previousEntry && samplesToMap(previousEntry.samples)[product]) || 0)})`);
         const idMap = { "Gel15g": "stockGel15g", "Gel50g": "stockGel50g", "Roll-On": "stockRollOn", "Spray": "stockSpray" };
         if (idMap[product]) $(idMap[product]).classList.add("stock-error");
       }
@@ -348,12 +429,11 @@
       return;
     }
 
-    deductStock(entry.samples);
+    localStorage.setItem("stockData", JSON.stringify(adjustedStock));
+    loadStock();
 
-    let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
-    const editIdx = $("editIndex").value;
     if (editIdx !== "") {
-      data[parseInt(editIdx)] = entry;
+      data[parseInt(editIdx, 10)] = entry;
       $("editIndex").value = "";
     } else {
       data.push(entry);
@@ -362,8 +442,15 @@
 
     let clinicDB = JSON.parse(localStorage.getItem("clinicDB")) || {};
     clinicDB[entry.clinic.toLowerCase()] = {
-      doctor: entry.doctor, number: entry.number, email: entry.email,
-      area: entry.area, lastVisit: entry.lastVisit, otherProduct: entry.otherProduct, patientCount: entry.patientCount
+      doctor: entry.doctor,
+      number: entry.number,
+      email: entry.email,
+      area: entry.area,
+      lastVisit: entry.lastVisit,
+      otherProduct: entry.otherProduct,
+      patientCount: entry.patientCount,
+      paymentMode: entry.paymentMode,
+      pendingBalance: entry.pendingBalance
     };
     localStorage.setItem("clinicDB", JSON.stringify(clinicDB));
     $("clinicList").innerHTML = Object.keys(clinicDB).map(c => `<option value="${c}">`).join("");
@@ -374,14 +461,25 @@
     showToast("✔ Entry saved successfully!");
   });
 
-  function showError(id) { $(id).style.display = "block"; }
+  function showError(id) {
+    $(id).style.display = "block";
+  }
 
   function clearForm() {
     $("entryForm").reset();
     $("editIndex").value = "";
-    document.querySelectorAll(".qty").forEach(q => { q.disabled = true; q.value = 1; });
+    document.querySelectorAll(".qty").forEach(q => {
+      q.disabled = true;
+      q.value = 1;
+    });
     document.querySelectorAll("small").forEach(s => s.style.display = "none");
+    $("pendingBalance").value = 0;
     setTodayAndRepeatDates();
+  }
+
+  function formatPendingBalance(value) {
+    const amount = Number(value) || 0;
+    return amount.toFixed(2);
   }
 
   function addRow(entry, index) {
@@ -399,6 +497,8 @@
       <td data-label="Last Visit">${entry.lastVisit}</td>
       <td data-label="Other Product"><strong>${entry.otherProduct || "-"}</strong></td>
       <td data-label="Patient Count">${entry.patientCount}</td>
+      <td data-label="Payment Mode">${entry.paymentMode || "-"}</td>
+      <td data-label="Pending Balance">${formatPendingBalance(entry.pendingBalance)}</td>
       <td data-label="Feedback">${entry.feedback || "-"}</td>
       <td data-label="Actions">
         <button class="action-btn" onclick="editRow(${index})">✏️</button>
@@ -427,6 +527,8 @@
     $("lastVisit").value = e.lastVisit;
     $("otherProduct").value = e.otherProduct;
     $("patientCount").value = e.patientCount;
+    $("paymentMode").value = e.paymentMode || "";
+    $("pendingBalance").value = e.pendingBalance ?? 0;
     $("feedback").value = e.feedback;
     document.querySelectorAll(".sample-item input[type='checkbox']").forEach(cb => {
       const qtyInput = cb.parentElement.querySelector(".qty");
@@ -447,6 +549,11 @@
   function deleteRow(index) {
     if (!confirm("Delete this entry?")) return;
     let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
+    const entryToDelete = data[index];
+    const stock = JSON.parse(localStorage.getItem("stockData")) || {};
+    const restoredStock = getAdjustedStock(stock, entryToDelete?.samples, "");
+    localStorage.setItem("stockData", JSON.stringify(restoredStock));
+    loadStock();
     data.splice(index, 1);
     localStorage.setItem("visitHistory", JSON.stringify(data));
     reloadTable();
@@ -458,7 +565,6 @@
     $("totalEntries").textContent = data.length;
     let totalSamples = 0;
     data.forEach(e => {
-      // FIX: correct regex — no extra backslashes
       parseSamples(e.samples).forEach(({ qty }) => totalSamples += qty);
     });
     $("totalSamples").textContent = totalSamples;
@@ -466,7 +572,7 @@
 
   function updateStock(product, value) {
     let stock = JSON.parse(localStorage.getItem("stockData")) || {};
-    stock[product] = Math.max(0, parseInt(value) || 0);
+    stock[product] = Math.max(0, parseInt(value, 10) || 0);
     localStorage.setItem("stockData", JSON.stringify(stock));
     loadStock();
   }
@@ -500,16 +606,6 @@
     $("totalremainStock").textContent = total;
   }
 
-  function deductStock(samplesStr) {
-    let stock = JSON.parse(localStorage.getItem("stockData")) || {};
-    // FIX: correct regex — was using escaped string syntax inside regex literal
-    parseSamples(samplesStr).forEach(({ product, qty }) => {
-      stock[product] = (stock[product] || 0) - qty;
-    });
-    localStorage.setItem("stockData", JSON.stringify(stock));
-    loadStock();
-  }
-
   function filterTable() {
     const q = $("searchInput").value.toLowerCase();
     const rows = $("historyTable").tBodies[0].rows;
@@ -526,7 +622,11 @@
   function exportToExcel() {
     let data = JSON.parse(localStorage.getItem("visitHistory")) || [];
     if (!data.length) return showToast("No data to export", true);
-    const ws = XLSX.utils.json_to_sheet(data);
+    const exportData = data.map(entry => ({
+      ...entry,
+      pendingBalance: formatPendingBalance(entry.pendingBalance)
+    }));
+    const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "VisitHistory");
     XLSX.writeFile(wb, "VisitHistory.xlsx");
