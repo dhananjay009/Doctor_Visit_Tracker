@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Doctor Visit Checklist</title>
+<style>
+  :root{
+    --bg:#f5f7fb; --card:#fff; --text:#172033; --muted:#6b7280;
+    --primary:#4f46e5; --primary-soft:#eef2ff; --border:#e5e7eb;
+    --success:#16a34a; --danger:#dc2626; --shadow:0 10px 30px rgba(15,23,42,.07);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+  button,input,textarea{font:inherit}
+  .app{min-height:100vh;display:grid;grid-template-columns:280px 1fr}
+  aside{background:#111827;color:#fff;padding:24px 18px;position:sticky;top:0;height:100vh;z-index:10}
+  .brand{display:flex;align-items:center;gap:12px;padding:4px 10px 28px}
+  .logo{width:42px;height:42px;border-radius:12px;background:#4f46e5;display:grid;place-items:center;font-weight:800}
+  .brand h1{font-size:17px;margin:0}.brand p{font-size:12px;color:#9ca3af;margin:3px 0 0}
+  .nav-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;padding:0 10px 10px}
+  .doctor-btn{width:100%;border:0;background:transparent;color:#d1d5db;text-align:left;padding:13px 12px;border-radius:10px;margin:3px 0;cursor:pointer;display:flex;gap:10px;align-items:center}
+  .doctor-btn:hover,.doctor-btn.active{background:#1f2937;color:#fff}
+  .doctor-btn .num{width:25px;height:25px;border-radius:7px;background:#374151;display:grid;place-items:center;font-size:12px}
+  .doctor-btn.active .num{background:#4f46e5}
+  main{padding:30px;max-width:1200px;width:100%;margin:auto}
+  .top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:24px}
+  .eyebrow{color:var(--primary);font-weight:700;font-size:13px;margin-bottom:5px}
+  h2{font-size:30px;margin:0 0 7px;letter-spacing:-.03em}.subtitle{color:var(--muted);margin:0}
+  .actions{display:flex;gap:9px;flex-wrap:wrap}
+  .btn{border:1px solid var(--border);background:#fff;color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:650}
+  .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .btn:hover{filter:brightness(.97);transform:translateY(-1px)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:17px;box-shadow:var(--shadow)}
+  .stat-label{font-size:12px;color:var(--muted)}.stat-value{font-size:24px;font-weight:800;margin-top:5px}
+  .progress-wrap{margin-top:9px;height:6px;background:#eef0f4;border-radius:99px;overflow:hidden}.progress{height:100%;background:var(--primary);width:0;transition:.25s}
+  .toolbar{display:flex;gap:10px;margin-bottom:14px}.search{flex:1;padding:12px 14px;border:1px solid var(--border);border-radius:11px;outline:none;background:#fff}.search:focus{border-color:var(--primary)}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .card-head{padding:20px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:15px}
+  .card-head h3{margin:0;font-size:18px}.card-head span{font-size:13px;color:var(--muted)}
+  .questions{padding:8px 22px}
+  .question{display:grid;grid-template-columns:auto 1fr 280px;gap:13px;align-items:center;padding:16px 0;border-bottom:1px solid #f0f1f4}
+  .question:last-child{border-bottom:0}
+  .check{width:20px;height:20px;accent-color:var(--primary);cursor:pointer}
+  .qtext{font-weight:600}.qnum{color:var(--muted);font-size:12px;margin-right:7px}
+  .note{width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 10px;outline:none;background:#fafafa}.note:focus{border-color:var(--primary);background:#fff}
+  .question.done .qtext{text-decoration:line-through;color:#9ca3af}
+  .empty{padding:35px;text-align:center;color:var(--muted)}
+  .footer-note{font-size:12px;color:var(--muted);margin-top:14px;text-align:right}
+  /* Tablet */
+  @media(max-width:850px){
+    .app{grid-template-columns:1fr}
+    aside{position:sticky;top:0;height:auto;padding:12px 14px}
+    .brand{padding:0 4px 12px}
+    .brand h1{font-size:16px}
+    .doctor-list{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+    .nav-title{display:none}
+    .doctor-btn{margin:0;padding:10px 9px;font-size:13px}
+    main{padding:20px 14px}
+    .question{grid-template-columns:auto 1fr}
+    .note{grid-column:2}
+    .stats{grid-template-columns:repeat(3,1fr)}
+  }
+
+  /* Mobile */
+  @media(max-width:600px){
+    body{font-size:14px}
+    .app{display:block}
+    aside{padding:10px;box-shadow:0 4px 18px rgba(0,0,0,.12)}
+    .brand{padding:2px 4px 10px}
+    .logo{width:36px;height:36px;border-radius:10px;font-size:13px}
+    .brand h1{font-size:15px}
+    .brand p{font-size:10px}
+    .doctor-list{
+      display:flex;
+      overflow-x:auto;
+      gap:7px;
+      padding-bottom:2px;
+      scrollbar-width:none;
+      -webkit-overflow-scrolling:touch
+    }
+    .doctor-list::-webkit-scrollbar{display:none}
+    .doctor-btn{
+      flex:0 0 auto;
+      width:auto;
+      min-width:max-content;
+      padding:9px 11px;
+      border-radius:9px;
+      font-size:12px
+    }
+    .doctor-btn .num{width:22px;height:22px;font-size:10px}
+    main{padding:16px 10px 24px}
+    .top{display:block;margin-bottom:16px}
+    h2{font-size:23px;line-height:1.2}
+    .subtitle{font-size:13px;line-height:1.45}
+    .actions{margin-top:13px;display:grid;grid-template-columns:1fr 1fr}
+    .btn{padding:11px 12px}
+    .stats{grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+    .stat{padding:11px 9px;border-radius:11px}
+    .stat-label{font-size:10px}
+    .stat-value{font-size:19px}
+    .progress-wrap{height:5px}
+    .toolbar{margin-bottom:10px}
+    .search{padding:11px 12px;font-size:13px}
+    .card{border-radius:12px}
+    .card-head{padding:14px;align-items:flex-start;flex-direction:column;gap:5px}
+    .card-head h3{font-size:15px;line-height:1.3}
+    .card-head span{font-size:11px;line-height:1.4}
+    .questions{padding:3px 14px}
+    .question{
+      grid-template-columns:24px 1fr;
+      gap:9px;
+      padding:13px 0
+    }
+    .check{width:20px;height:20px;margin-top:1px}
+    .qtext{font-size:13px;line-height:1.45}
+    .qnum{font-size:10px}
+    .note{
+      grid-column:1 / -1;
+      width:100%;
+      padding:9px 10px;
+      font-size:12px;
+      margin-top:1px
+    }
+    .footer-note{text-align:center;font-size:10px;margin-top:10px}
+  }
+
+  @media(max-width:360px){
+    .doctor-btn{font-size:11px;padding:8px 9px}
+    h2{font-size:21px}
+    .stat{padding:9px 6px}
+    .stat-value{font-size:17px}
+    .qtext{font-size:12.5px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand">
+      <div class="logo">DR</div>
+      <div><h1>Doctor Visit</h1><p>Sales & Visit Checklist</p></div>
+    </div>
+    <div class="nav-title">Doctor Types</div>
+    <div class="doctor-list" id="doctorList"></div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <div>
+        <div class="eyebrow">VISIT CHECKLIST</div>
+        <h2 id="pageTitle">Personal Clinic Doctor</h2>
+        <p class="subtitle">Track the important questions during your doctor visit.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="resetCurrent()">Reset</button>
+        <button class="btn primary" onclick="saveData()">Save Visit</button>
+      </div>
+    </div>
+
+    <section class="stats">
+      <div class="stat"><div class="stat-label">Questions</div><div class="stat-value" id="total">0</div></div>
+      <div class="stat"><div class="stat-label">Completed</div><div class="stat-value" id="completed">0</div></div>
+      <div class="stat"><div class="stat-label">Progress</div><div class="stat-value" id="percent">0%</div><div class="progress-wrap"><div class="progress" id="progress"></div></div></div>
+    </section>
+
+    <div class="toolbar">
+      <input class="search" id="search" placeholder="Search questions..." oninput="renderQuestions()">
+    </div>
+
+    <section class="card">
+      <div class="card-head">
+        <div><h3 id="cardTitle">Personal Clinic Doctor</h3><span>Use the notes field for price, feedback, follow-up, or remarks.</span></div>
+        <span id="countLabel">0 / 0 completed</span>
+      </div>
+      <div class="questions" id="questions"></div>
+    </section>
+    <div class="footer-note">Data is saved in your browser when you click “Save Visit”.</div>
+  </main>
+</div>
+
+<script>
+const doctorTypes = [
+  {
+    title:"Personal Clinic Doctor", short:"Personal Clinic",
+    questions:[
+      "Product detailing",
+      "How many years has the product been in the market?",
+      "How much credit and discount will we get?",
+      "What is the payment period?",
+      "Can we get a sample to try?",
+      "Will this product be available in medical stores?",
+      "Is the product drug-free?",
+      "Are there any side effects?",
+      "If we sell more products, will we get any gifts or incentives?"
+    ]
+  },
+  {
+    title:"Trust / Trusti Doctor", short:"Trust / Trusti",
+    questions:[
+      "What is the price of this product?",
+      "How much discount will we get?",
+      "What is the expiry period?",
+      "If we take more products, will we get more discount?",
+      "Can we get extra time for payment?",
+      "Will the product be available regularly?",
+      "Can a group of doctors get samples for testing?"
+    ]
+  },
+  {
+    title:"Home Visit Doctor", short:"Home Visit",
+    questions:[
+      "Can we get more samples and additional discount?",
+      "If we purchase a smaller quantity, can we get a better discount?"
+    ]
+  },
+  {
+    title:"Multiple Hospitals – Doctor / Accountant", short:"Multiple Hospitals",
+    questions:[
+      "Can we arrange a meeting with the senior doctor?",
+      "Can we get complete product details?",
+      "Can we get samples to try before placing an order?",
+      "If the doctor approves the product, can the hospital place an order?"
+    ]
+  }
+];
+
+let current = 0;
+let data = JSON.parse(localStorage.getItem("doctorVisitData") || "{}");
+
+function key(){ return "type_" + current; }
+function getState(){
+  if(!data[key()]) data[key()] = doctorTypes[current].questions.map(()=>({done:false,note:""}));
+  return data[key()];
+}
+
+function renderDoctors(){
+  document.getElementById("doctorList").innerHTML = doctorTypes.map((d,i)=>`
+    <button class="doctor-btn ${i===current?'active':''}" onclick="selectDoctor(${i})">
+      <span class="num">${i+1}</span><span>${d.short}</span>
+    </button>`).join("");
+}
+
+function renderQuestions(){
+  const q = doctorTypes[current].questions;
+  const state = getState();
+  const term = document.getElementById("search").value.toLowerCase().trim();
+  const filtered = q.map((text,i)=>({text,i})).filter(x=>x.text.toLowerCase().includes(term));
+  const box = document.getElementById("questions");
+
+  if(!filtered.length){box.innerHTML='<div class="empty">No questions found.</div>'; return;}
+
+  box.innerHTML = filtered.map(({text,i})=>`
+    <div class="question ${state[i].done?'done':''}">
+      <input class="check" type="checkbox" ${state[i].done?'checked':''} onchange="toggle(${i},this.checked)">
+      <div class="qtext"><span class="qnum">Q${i+1}</span>${text}</div>
+      <input class="note" value="${escapeHtml(state[i].note)}" placeholder="Add notes..." oninput="setNote(${i},this.value)">
+    </div>`).join("");
+
+  updateStats();
+}
+
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function toggle(i,val){getState()[i].done=val; renderQuestions();}
+function setNote(i,val){getState()[i].note=val;}
+function updateStats(){
+  const total=doctorTypes[current].questions.length, done=getState().filter(x=>x.done).length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById("total").textContent=total;
+  document.getElementById("completed").textContent=done;
+  document.getElementById("percent").textContent=pct+"%";
+  document.getElementById("progress").style.width=pct+"%";
+  document.getElementById("countLabel").textContent=`${done} / ${total} completed`;
+}
+function selectDoctor(i){
+  current=i;
+  document.getElementById("search").value="";
+  document.getElementById("pageTitle").textContent=doctorTypes[i].title;
+  document.getElementById("cardTitle").textContent=doctorTypes[i].title;
+  renderDoctors(); renderQuestions();
+}
+function resetCurrent(){
+  if(confirm("Reset all answers and notes for this doctor type?")){
+    data[key()]=doctorTypes[current].questions.map(()=>({done:false,note:""}));
+    saveData(false); renderQuestions();
+  }
+}
+function saveData(show=true){
+  localStorage.setItem("doctorVisitData",JSON.stringify(data));
+  if(show){
+    const btn=document.querySelector(".btn.primary");
+    const old=btn.textContent; btn.textContent="Saved ✓";
+    setTimeout(()=>btn.textContent=old,1200);
+  }
+}
+renderDoctors(); renderQuestions();
+</script>
+</body>
+</html>
